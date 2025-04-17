@@ -1,51 +1,80 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MobyLabWebProgramming.Core.DataTransferObjects;
+using MobyLabWebProgramming.Core.Requests;
+using MobyLabWebProgramming.Core.Responses;
+using MobyLabWebProgramming.Infrastructure.Authorization;
+using MobyLabWebProgramming.Infrastructure.Services.Interfaces;
+
+namespace MobyLabWebProgramming.Backend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ProjectController : ControllerBase
+public class ProjectController : AuthorizedController
 {
+    private readonly IProjectService _projectService;
+
+    public ProjectController(IUserService userService, IProjectService projectService) : base(userService)
+    {
+        _projectService = projectService;
+    }
+
+    [Authorize]
     [HttpPost]
-    public IActionResult Create([FromBody] CreateProjectDTO dto)
+    public async Task<ActionResult<RequestResponse>> Create([FromBody] ProjectAddDTO dto)
     {
-        var project = new ProjectDTO
+        var currentUser = await GetCurrentUser();
+        if (currentUser.Error != null)
         {
-            Id = Guid.NewGuid(),
-            Title = dto.Title,
-            Description = dto.Description,
-            CreatedAt = DateTime.UtcNow
-        };
+            return ErrorMessageResult(currentUser.Error);
+        }
 
-        return CreatedAtAction(nameof(GetById), new { id = project.Id }, project);
+        var result = await _projectService.AddProject(dto, currentUser.Result!, CancellationToken.None);
+        return result.Error != null ? ErrorMessageResult(result.Error) : FromServiceResponse(result);
     }
 
-    [HttpGet("{id}")]
-    public IActionResult GetById(Guid id)
+    [Authorize]
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<RequestResponse<ProjectDTO>>> GetById([FromRoute] Guid id)
     {
-        return Ok(new ProjectDTO
-        {
-            Id = id,
-            Title = "Mock Project",
-            Description = "Descriere demo",
-            CreatedAt = DateTime.UtcNow
-        });
+        var result = await _projectService.GetProject(id);
+        return result.Error != null ? ErrorMessageResult<ProjectDTO>(result.Error) : FromServiceResponse(result);
     }
 
-    [HttpPut("{id}")]
-    public IActionResult Update(Guid id, [FromBody] UpdateProjectDTO dto)
+    [Authorize]
+    [HttpGet]
+    public async Task<ActionResult<RequestResponse<PagedResponse<ProjectDTO>>>> GetPage([FromQuery] PaginationSearchQueryParams pagination)
     {
-        // Simulează actualizarea proiectului cu ID-ul dat (mock)
-        var updatedProject = new ProjectDTO
-        {
-            Id = id,
-            Title = dto.Title,
-            Description = dto.Description,
-            CreatedAt = DateTime.UtcNow // păstrăm o dată nouă ca exemplu
-        };
-
-        // Răspuns cu 200 OK și proiectul actualizat (doar ca demo)
-        return Ok(updatedProject);
+        var result = await _projectService.GetProjects(pagination);
+        return result.Error != null ? ErrorMessageResult<PagedResponse<ProjectDTO>>(result.Error) : FromServiceResponse(result);
     }
 
+    [Authorize]
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult<RequestResponse>> Update([FromRoute] Guid id, [FromBody] UpdateProjectDTO dto)
+    {
+        var currentUser = await GetCurrentUser();
+        if (currentUser.Error != null)
+        {
+            return ErrorMessageResult(currentUser.Error);
+        }
 
+        dto.Id = id;
+        var result = await _projectService.UpdateProject(dto, currentUser.Result!, CancellationToken.None);
+        return result.Error != null ? ErrorMessageResult(result.Error) : FromServiceResponse(result);
+    }
+
+    [Authorize]
+    [HttpDelete("{id:guid}")]
+    public async Task<ActionResult<RequestResponse>> Delete([FromRoute] Guid id)
+    {
+        var currentUser = await GetCurrentUser();
+        if (currentUser.Error != null)
+        {
+            return ErrorMessageResult(currentUser.Error);
+        }
+
+        var result = await _projectService.DeleteProject(id, currentUser.Result!, CancellationToken.None);
+        return result.Error != null ? ErrorMessageResult(result.Error) : FromServiceResponse(result);
+    }
 }

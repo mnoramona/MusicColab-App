@@ -11,7 +11,6 @@ namespace MobyLabWebProgramming.Core.Entities
         public string Title { get; set; } = default!;
         public string Message { get; set; } = default!;
         public bool IsRead { get; set; }
-        public DateTime CreatedAt { get; set; }
 
         // Foreign key
         public Guid UserId { get; set; }

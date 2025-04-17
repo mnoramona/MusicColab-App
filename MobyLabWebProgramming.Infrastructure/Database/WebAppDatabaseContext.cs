@@ -1,6 +1,8 @@
-﻿using Ardalis.EFCore.Extensions; // Ensure this package is installed and compatible with your project
+﻿using Ardalis.EFCore.Extensions; // Asigură-te că ai instalat Ardalis.Specification.EntityFrameworkCore
 using Microsoft.EntityFrameworkCore;
 using MobyLabWebProgramming.Core.Entities;
+using MobyLabWebProgramming.Infrastructure.Database.Configurations;
+using MobyLabWebProgramming.Infrastructure.EntityConfigurations;
 
 namespace MobyLabWebProgramming.Infrastructure.Database;
 
@@ -32,8 +34,19 @@ public sealed class WebAppDatabaseContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Ensure the extension is supported by your database provider
-        modelBuilder.HasPostgresExtension("unaccent")
-            .ApplyAllConfigurationsFromCurrentAssembly();
+        // Applies PostgreSQL specific extensions if using Postgres
+        modelBuilder.HasPostgresExtension("unaccent");
+
+        // Apply configurations explicitly
+        modelBuilder.ApplyConfiguration(new UserConfiguration());
+        modelBuilder.ApplyConfiguration(new UserFileConfiguration());
+        modelBuilder.ApplyConfiguration(new ProjectConfiguration());
+        modelBuilder.ApplyConfiguration(new TrackConfiguration());
+        modelBuilder.ApplyConfiguration(new CommentConfiguration());
+        modelBuilder.ApplyConfiguration(new NotificationConfiguration());
+        modelBuilder.ApplyConfiguration(new UserProjectConfiguration());
+
+        // Or alternatively you could scan the whole assembly (you already had this):
+        modelBuilder.ApplyAllConfigurationsFromCurrentAssembly();
     }
 }

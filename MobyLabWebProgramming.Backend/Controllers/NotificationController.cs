@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MobyLabWebProgramming.Core.DataTransferObjects;
 using MobyLabWebProgramming.Core.Requests;
@@ -10,18 +10,18 @@ namespace MobyLabWebProgramming.Backend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class CommentController : AuthorizedController
+public class NotificationController : AuthorizedController
 {
-    private readonly ICommentService _commentService;
+    private readonly INotificationService _notificationService;
 
-    public CommentController(IUserService userService, ICommentService commentService) : base(userService)
+    public NotificationController(IUserService userService, INotificationService notificationService) : base(userService)
     {
-        _commentService = commentService;
+        _notificationService = notificationService;
     }
 
     [Authorize]
     [HttpPost]
-    public async Task<ActionResult<RequestResponse>> Create([FromBody] UpdateCommentDTO dto)
+    public async Task<ActionResult<RequestResponse>> Create([FromBody] NotificationDTO dto)
     {
         var currentUser = await GetCurrentUser();
         if (currentUser.Error != null)
@@ -29,29 +29,29 @@ public class CommentController : AuthorizedController
             return ErrorMessageResult(currentUser.Error);
         }
 
-        var result = await _commentService.AddComment(dto, CancellationToken.None);
+        var result = await _notificationService.AddNotification(dto, currentUser.Result!, CancellationToken.None);
         return result.Error != null ? ErrorMessageResult(result.Error) : FromServiceResponse(result);
     }
 
     [Authorize]
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<RequestResponse<CommentDTO>>> GetById([FromRoute] Guid id)
+    public async Task<ActionResult<RequestResponse<NotificationDTO>>> GetById([FromRoute] Guid id)
     {
-        var result = await _commentService.GetComment(id);
-        return result.Error != null ? ErrorMessageResult<CommentDTO>(result.Error) : FromServiceResponse(result);
+        var result = await _notificationService.GetNotification(id);
+        return result.Error != null ? ErrorMessageResult<NotificationDTO>(result.Error) : FromServiceResponse(result);
     }
 
     [Authorize]
     [HttpGet]
-    public async Task<ActionResult<RequestResponse<PagedResponse<CommentDTO>>>> GetPage([FromQuery] PaginationSearchQueryParams pagination)
+    public async Task<ActionResult<RequestResponse<PagedResponse<NotificationDTO>>>> GetPage([FromQuery] PaginationSearchQueryParams pagination)
     {
-        var result = await _commentService.GetComments(pagination);
-        return result.Error != null ? ErrorMessageResult<PagedResponse<CommentDTO>>(result.Error) : FromServiceResponse(result);
+        var result = await _notificationService.GetNotifications(pagination);
+        return result.Error != null ? ErrorMessageResult<PagedResponse<NotificationDTO>>(result.Error) : FromServiceResponse(result);
     }
 
     [Authorize]
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult<RequestResponse>> Update([FromRoute] Guid id, [FromBody] UpdateCommentDTO dto)
+    public async Task<ActionResult<RequestResponse>> Update([FromRoute] Guid id, [FromBody] NotificationDTO dto)
     {
         var currentUser = await GetCurrentUser();
         if (currentUser.Error != null)
@@ -60,7 +60,7 @@ public class CommentController : AuthorizedController
         }
 
         dto.Id = id;
-        var result = await _commentService.UpdateComment(dto, CancellationToken.None);
+        var result = await _notificationService.UpdateNotification(dto, CancellationToken.None);
         return result.Error != null ? ErrorMessageResult(result.Error) : FromServiceResponse(result);
     }
 
@@ -74,7 +74,7 @@ public class CommentController : AuthorizedController
             return ErrorMessageResult(currentUser.Error);
         }
 
-        var result = await _commentService.DeleteComment(id, CancellationToken.None);
+        var result = await _notificationService.DeleteNotification(id, CancellationToken.None);
         return result.Error != null ? ErrorMessageResult(result.Error) : FromServiceResponse(result);
     }
-}
+} 

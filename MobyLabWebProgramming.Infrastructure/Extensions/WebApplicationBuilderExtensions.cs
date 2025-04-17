@@ -186,7 +186,11 @@ public static class WebApplicationBuilderExtensions
             .AddScoped<ILoginService, LoginService>()
             .AddScoped<IFileRepository, FileRepository>()
             .AddScoped<IUserFileService, UserFileService>()
-            .AddScoped<IMailService, MailService>();
+            .AddScoped<IMailService, MailService>()
+            .AddScoped<IProjectService, ProjectService>()
+            .AddScoped<ITrackService, TrackService>()
+            .AddScoped<ICommentService, CommentService>()
+            .AddScoped<INotificationService, NotificationService>();
 
         return builder;
     }

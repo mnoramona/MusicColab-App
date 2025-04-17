@@ -1,6 +1,6 @@
 ﻿namespace MobyLabWebProgramming.Core.DataTransferObjects;
 
-public class TrackUploadDTO
+public class AddTrackDTO
 {
     public string Title { get; set; } = default!;
     public string Description { get; set; } = default!;

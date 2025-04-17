@@ -8,13 +8,18 @@ namespace MobyLabWebProgramming.Backend.Controllers;
 public class TrackController : ControllerBase
 {
     [HttpPost]
-    public IActionResult Upload([FromBody] UploadTrackDTO dto)
+    public IActionResult Upload([FromBody] UpdateTrackDTO dto)
     {
+        if (dto.Duration == null)
+        {
+            return BadRequest("Duration is required.");
+        }
+
         var track = new TrackDTO
         {
-            Id = Guid.NewGuid(),
-            Title = dto.Title,
-            DurationInSeconds = dto.DurationInSeconds,
+            Id = dto.Id != Guid.Empty ? dto.Id : Guid.NewGuid(),
+            Title = dto.Title ?? "Untitled Track",
+            DurationInSeconds = (int)dto.Duration.Value.TotalSeconds,
             UploadedAt = DateTime.UtcNow,
             ProjectId = dto.ProjectId
         };

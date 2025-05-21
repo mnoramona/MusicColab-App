@@ -15,6 +15,10 @@ public interface IUserService
     /// </summary>
     public Task<ServiceResponse<UserDTO>> GetUser(Guid id, CancellationToken cancellationToken = default);
     /// <summary>
+    /// GetUser will provide the information about a user given its email.
+    /// </summary>
+    public Task<ServiceResponse<UserDTO>> GetUser(string email, CancellationToken cancellationToken = default);
+    /// <summary>
     /// GetUsers returns page with user information from the database.
     /// </summary>
     public Task<ServiceResponse<PagedResponse<UserDTO>>> GetUsers(PaginationSearchQueryParams pagination, CancellationToken cancellationToken = default);
@@ -41,4 +45,8 @@ public interface IUserService
     /// If the requesting user is null then no verification is performed as it indicates that the application.
     /// </summary>
     public Task<ServiceResponse> DeleteUser(Guid id, UserDTO? requestingUser = null, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// SendEmailToUser sends an email to a user.
+    /// </summary>
+    public Task<ServiceResponse> SendEmailToUser(Guid userId, string subject, string body, bool isHtmlBody = false, string? senderTitle = null, CancellationToken cancellationToken = default);
 }

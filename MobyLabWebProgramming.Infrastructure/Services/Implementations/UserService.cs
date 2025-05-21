@@ -125,4 +125,38 @@ public class UserService(IRepository<WebAppDatabaseContext> repository, ILoginSe
 
         return ServiceResponse.ForSuccess();
     }
+
+    public async Task<ServiceResponse> SendEmailToUser(Guid userId, string subject, string body, bool isHtmlBody = false, string? senderTitle = null, CancellationToken cancellationToken = default)
+    {
+        var user = await repository.GetAsync(new UserSpec(userId), cancellationToken);
+
+        if (user == null)
+        {
+            return ServiceResponse.FromError(new(HttpStatusCode.NotFound, "User not found!", ErrorCodes.EntityNotFound));
+        }
+
+        var result = await mailService.SendMail(user.Email, subject, body, isHtmlBody, senderTitle, cancellationToken);
+        return result;
+    }
+
+    public async Task<ServiceResponse<UserDTO>> GetUser(string email, CancellationToken cancellationToken = default)
+    {
+        var result = await repository.GetAsync(new UserSpec(email), cancellationToken);
+
+        if (result != null)
+        {
+            var userDto = new UserDTO
+            {
+                Id = result.Id,
+                Email = result.Email,
+                Name = result.Name,
+                Role = result.Role
+            };
+            return ServiceResponse.ForSuccess(userDto);
+        }
+        else
+        {
+            return ServiceResponse.FromError<UserDTO>(CommonErrors.UserNotFound);
+        }
+    }
 }

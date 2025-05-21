@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MobyLabWebProgramming.Core.DataTransferObjects;
+using MobyLabWebProgramming.Core.Errors;
 using MobyLabWebProgramming.Core.Requests;
 using MobyLabWebProgramming.Core.Responses;
 using MobyLabWebProgramming.Infrastructure.Authorization;
@@ -25,8 +27,8 @@ public class UserController(IUserService userService) : AuthorizedController(use
     {
         var currentUser = await GetCurrentUser();
 
-        return currentUser.Result != null ? 
-            FromServiceResponse(await UserService.GetUser(id)) : 
+        return currentUser.Result != null ?
+            FromServiceResponse(await UserService.GetUser(id)) :
             ErrorMessageResult<UserDTO>(currentUser.Error);
     }
 
@@ -50,16 +52,23 @@ public class UserController(IUserService userService) : AuthorizedController(use
     /// <summary>
     /// This method implements the Create operation (C from CRUD) of a user. 
     /// </summary>
-    [Authorize]
+    [AllowAnonymous]
     [HttpPost] // This attribute will make the controller respond to a HTTP POST request on the route /api/User/Add.
     public async Task<ActionResult<RequestResponse>> Add([FromBody] UserAddDTO user)
     {
-        var currentUser = await GetCurrentUser();
+        // Hash the password before saving
         user.Password = PasswordUtils.HashPassword(user.Password);
 
-        return currentUser.Result != null ?
-            FromServiceResponse(await UserService.AddUser(user, currentUser.Result)) :
-            ErrorMessageResult(currentUser.Error);
+        // Check if a user with this email already exists
+        var existingUser = await UserService.GetUser(user.Email);
+        if (existingUser.Result != null)
+        {
+            // Return a simple BadRequest with a message
+            return BadRequest(new { message = "Email already in use." });
+        }
+
+        // No user exists with this email, so create the new user (no currentUser needed)
+        return Ok(await UserService.AddUser(user, null));
     }
 
     /// <summary>
